@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { Header } from './Header';
 describe('Header', () => {
@@ -9,15 +10,39 @@ describe('Header', () => {
     expect(logo).toBeInTheDocument();
     expect(logo.closest('a')).toHaveAttribute('href', '/');
   });
-  it('displays the cart button', () => {
+  it('starts with the cart closed', () => {
     render(<Header />);
-
     expect(
       screen.getByRole('button', { name: 'Abrir carrito' })
-    ).toBeInTheDocument();
+    ).toHaveAttribute('aria-expanded', 'false');
+    expect(
+      screen.queryByRole('complementary', { name: 'Tu carrito' })
+    ).not.toBeInTheDocument();
   });
-  it('matches the snapshot', () => {
-    const { container } = render(<Header />);
-    expect(container).toMatchSnapshot();
+
+  it('opens the cart when the button is clicked', async () => {
+    const user = userEvent.setup();
+    render(<Header />);
+
+    await user.click(screen.getByRole('button', { name: 'Abrir carrito' }));
+
+    expect(
+      screen.getByRole('complementary', { name: 'Tu carrito' })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Abrir carrito' })
+    ).toHaveAttribute('aria-expanded', 'true');
+  });
+
+  it('closes the cart with the Escape key', async () => {
+    const user = userEvent.setup();
+    render(<Header />);
+
+    await user.click(screen.getByRole('button', { name: 'Abrir carrito' }));
+    await user.keyboard('{Escape}');
+
+    expect(
+      screen.queryByRole('complementary', { name: 'Tu carrito' })
+    ).not.toBeInTheDocument();
   });
 });
